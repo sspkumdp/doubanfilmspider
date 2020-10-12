@@ -1,0 +1,10 @@
+class comment:
+    comment_id=""
+    user_id=""
+    film_id=""
+    user_name=""
+    user_url=""
+    star=""
+    comment_time=""
+    comment_useful=""
+    comment_content=""
