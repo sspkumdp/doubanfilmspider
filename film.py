@@ -7,6 +7,8 @@ from bs4 import BeautifulSoup
 import actor
 import re
 import sql
+import time
+import proxy
 
 class film:
     film_id=""
@@ -24,7 +26,7 @@ class film:
     score=""
     
     def get_film(self,film_id):
-        r=requests.get(url='https://movie.douban.com/subject/'+str(film_id),headers=util.headers)
+        r=proxy.gethtml(url='https://movie.douban.com/subject/'+str(film_id),headers=util.headers,params={})
         if r is None:
             return
         soup=BeautifulSoup(r.content.decode(),'html.parser')
@@ -44,7 +46,9 @@ class film:
         if sw:
             swn=sw.find_next_sibling('span')
             if swn:
-                self.screenwriter=util.listtostr(swn.contents,'/')
+                swna=swn.find_all('a')
+                if swna:
+                    self.screenwriter=util.listtostr(swna,'/')
 
         lst=soup.find_all('a',attrs={'rel':'v:starring'})
         if lst:
@@ -97,7 +101,7 @@ class film:
             self.score=sf.get_text()
 
     def get_actor_info(self,act):
-        r=requests.get(url='https://movie.douban.com/celebrity/'+str(act.actor_id),headers=util.headers)
+        r=proxy.gethtml(url='https://movie.douban.com/celebrity/'+str(act.actor_id),headers=util.headers,params={})
         if r is None:
             return 
         soup=BeautifulSoup(r.content.decode(),'html.parser')
@@ -160,7 +164,7 @@ class film:
 
 
     def get_actors(self,film_id):
-        r=requests.get(url='https://movie.douban.com/subject/'+str(film_id)+'/celebrities',headers=util.headers)
+        r=proxy.gethtml(url='https://movie.douban.com/subject/'+str(film_id)+'/celebrities',headers=util.headers,params={})
         if r is None:
             return
         soup=BeautifulSoup(r.content.decode(),'html.parser')
@@ -180,6 +184,8 @@ class film:
                     ar=re.search(r'(\d+)\/?$',sfa.get('href'))
                     if ar:
                         act.actor_id=ar.group(1)
+            if act.actor_id=="":
+                continue
             
             sf=li.find('span',{'class':'role'})
             if sf:
@@ -191,10 +197,10 @@ class film:
                 if sfa:
                     act.main_works=util.listtostr(sfa,'/')
 
-            #self.get_actor_info(act)
 
             dbacts=sql.get_actor_byid(act.actor_id)
             if len(dbacts)==0:
+                self.get_actor_info(act)
                 sql.save_actor(act)
             dbactfs=sql.get_actor_film_byid(act.actor_id,film_id)
             if len(dbactfs)==0:

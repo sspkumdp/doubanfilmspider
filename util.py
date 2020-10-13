@@ -1,9 +1,8 @@
 import bs4
 
-
-COMMENT_MAX=1
-USER_FILM_MAX=1
-
+COMMENT_MAX=100
+USER_FILM_MAX=100
+SLEEP_TIME=0.5
 headers={
         'Accept': 'text/html, application/xhtml+xml, application/xml; q=0.9, */*; q=0.8'
         ,'Accept-Language': 'zh-Hans-CN, zh-Hans; q=0.5'

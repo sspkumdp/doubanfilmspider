@@ -3,6 +3,10 @@ import requests
 import re
 from bs4 import BeautifulSoup
 import film
+import time
+import sql
+import proxy
+
 class user:
     user_id=""
     user_name=""
@@ -24,7 +28,7 @@ class user:
         ,'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.18363'
     }
     def get_viewed_films(self,user_url):
-        r=requests.get(url=user_url+'/collect?start=0',headers=self.headers)
+        r=proxy.gethtml(url=user_url+'/collect?start=0',headers=self.headers,params={})
         if r is None:
             return
         soup=BeautifulSoup(r.content.decode(),'html.parser')
@@ -45,7 +49,7 @@ class user:
             tot=util.USER_FILM_MAX
 
         for i in range(0,int(tot/15)+1):
-            r=requests.get(url=user_url+'/collect?start='+str(i*15),headers=util.headers)
+            r=proxy.gethtml(url=user_url+'/collect?start='+str(i*15),headers=util.headers,params={})
             soup=BeautifulSoup(r.content.decode(),'html.parser')
             items=soup.find_all('div',{'class':'item'})
             if items is None:
@@ -58,12 +62,14 @@ class user:
                 refr=re.search(r'(\d+)\/?$',film_id_ref)
                 if refr:
                     film_id=refr.group(1)
-                    f=film.film()
-                    f.film_id=film_id
-                    f.save()
+                    flms=sql.get_film_byid(film_id)
+                    if len(flms)==0:
+                        f=film.film()
+                        f.film_id=film_id
+                        f.save()
 
     def get_user_info(self,user_url):
-        r=requests.get(url=user_url,headers=self.headers)
+        r=proxy.gethtml(url=user_url,headers=self.headers,params={})
         soup=BeautifulSoup(r.content.decode(),'html.parser')
         ui=soup.find('div',{'class':'user-info'})
         if ui:

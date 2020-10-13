@@ -5,6 +5,9 @@ import comment
 import re
 import sql
 import user
+import header
+import proxy
+import time
 
 def has_class_and_title(tag):
     return tag.has_attr('title') and tag.has_attr('class')
@@ -22,7 +25,7 @@ class comments:
     }
     def get_comments_by_film(self,film_id):
         params={'start':'0','limit':'20','status':'P','sort':'new_score'}
-        r=requests.get(url='https://movie.douban.com/subject/'+str(film_id)+'/comments',params=params,headers=self.headers)
+        r=proxy.gethtml('https://movie.douban.com/subject/'+str(film_id)+'/comments',self.headers,params)
         if r is None:
             return
         soup=BeautifulSoup(r.content.decode(),'html.parser')
@@ -43,7 +46,7 @@ class comments:
         
         for i in range(0,int(tot/20)+1):
             params={'start':str(i*20),'limit':'20','status':'P','sort':'new_score'}
-            r=requests.get(url='https://movie.douban.com/subject/'+str(film_id)+'/comments',params=params,headers=self.headers)
+            r=proxy.gethtml(url='https://movie.douban.com/subject/'+str(film_id)+'/comments',params=params,headers=self.headers)
             if r is None:
                 continue
             soup=BeautifulSoup(r.content.decode(),'html.parser')
@@ -53,7 +56,7 @@ class comments:
             cmts=soup.find_all('div',attrs={'class':'comment-item'})
             if cmts is None:
                 continue
-            for cmt in cmts[0:1]:
+            for cmt in cmts:
                 c=comment.comment()
                 c.comment_id=cmt.get('data-cid')
                 #<span class="votes vote-count">1042</span>
@@ -72,17 +75,20 @@ class comments:
                 if len(urla)>1:
                     c.user_id=urla[-1]
 
-                new_user=user.user()
-                new_user.user_id=c.user_id
-                new_user.user_name=c.user_name
-                new_user.user_url=c.user_url
-
-                new_user.get_user_info(new_user.user_url)
-                dbusers=sql.get_user_byid(new_user.user_id)
+                dbusers=sql.get_user_byid(c.user_id)
                 if len(dbusers)==0:
-                    sql.save_user(new_user)
+                    new_user=user.user()
+                    new_user.user_id=c.user_id
+                    new_user.user_name=c.user_name
+                    new_user.user_url=c.user_url
+
+                    new_user.get_user_info(new_user.user_url)
+                    dbusers=sql.get_user_byid(new_user.user_id)
+                    if len(dbusers)==0:
+                        sql.save_user(new_user)
+                    if new_user.visible=='0':
+                        sql.update_user_spider(new_user.user_id)
                 
-                print(new_user)
 
                 #<span title="力荐" class="allstar50 rating"></span>
                 if ci:
@@ -109,6 +115,5 @@ class comments:
 
 '''
 cmts=comments()
-cmts.get_comments_by_film(25907124,100)
-            
+cmts.get_comments_by_film(25907124)
 '''
