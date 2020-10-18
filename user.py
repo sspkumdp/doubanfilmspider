@@ -6,7 +6,7 @@ import film
 import time
 import sql
 import proxy
-
+import log
 class user:
     user_id=""
     user_name=""
@@ -22,7 +22,6 @@ class user:
         ,'Accept-Language': 'zh-Hans-CN, zh-Hans; q=0.5'
         ,'Cache-Control': 'no-cache'
         ,'Connection': 'Keep-Alive'
-        ,'Cookie': '__utmc=30149280; __utmz=30149280.1602483789.9.6.utmcsr=douban.com|utmccn=(referral)|utmcmd=referral|utmcct=/people/darkwood/; ll="108288"; _vwo_uuid_v2=D3E3229A4D790E83637E63D358C7399F8|007c2dd0330c657228433d0c294a33ae; __gads=ID=50a3fe7d3fd21b76:T=1602395254:S=ALNI_MYeijA_iOl2HXUHdG6lPo_WtDhsJg; ap_v=0,6.0; bid=_h2ZhUpcR58; __utma=30149280.584000826.1592147609.1602483789.1602488239.10; __utmb=30149280.2.10.1602488239; douban-fav-remind=1; ct=y; _pk_ref.100001.8cb4=%5B%22%22%2C%22%22%2C1602491416%2C%22https%3A%2F%2Fmovie.douban.com%2Fsubject%2F25907124%2Fcomments%3Fstart%3D20%26limit%3D20%26status%3DP%26sort%3Dnew_score%22%5D; _pk_id.100001.8cb4=f91e3c83335a234c.1592147608.12.1602491458.1602484882.; __yadk_uid=QSJJ7uzzBnVdBtN4NdC5nAvB7JNebAIj; _pk_ses.100001.8cb4=*'
         ,'Host': 'www.douban.com'
         ,'Upgrade-Insecure-Requests': '1'
         ,'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.18363'
@@ -50,7 +49,11 @@ class user:
 
         for i in range(0,int(tot/15)+1):
             r=proxy.gethtml(url=user_url+'/collect?start='+str(i*15),headers=util.headers,params={})
+            if r is None:
+                continue
             soup=BeautifulSoup(r.content.decode(),'html.parser')
+            if soup is None:
+                continue
             items=soup.find_all('div',{'class':'item'})
             if items is None:
                 continue
@@ -62,15 +65,24 @@ class user:
                 refr=re.search(r'(\d+)\/?$',film_id_ref)
                 if refr:
                     film_id=refr.group(1)
-                    flms=sql.get_film_byid(film_id)
-                    if len(flms)==0:
-                        f=film.film()
-                        f.film_id=film_id
-                        f.save()
+                    try:
+                        flms=sql.get_film_byid(film_id)
+                        if len(flms)==0:
+                            f=film.film()
+                            f.film_id=film_id
+                            f.save()
+                    except Exception as e:
+                        log.logger.info(str(e))
 
     def get_user_info(self,user_url):
         r=proxy.gethtml(url=user_url,headers=self.headers,params={})
+        if r is None:
+            self.visible='0'
+            return
         soup=BeautifulSoup(r.content.decode(),'html.parser')
+        if soup is None:
+            self.visible='0'
+            return
         ui=soup.find('div',{'class':'user-info'})
         if ui:
             self.visible='1'

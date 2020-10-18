@@ -9,7 +9,7 @@ import re
 import sql
 import time
 import proxy
-
+import log
 class film:
     film_id=""
     film_name=""
@@ -24,6 +24,7 @@ class film:
     film_alias=""
     imdb=""
     score=""
+    film_summary=""
     
     def get_film(self,film_id):
         r=proxy.gethtml(url='https://movie.douban.com/subject/'+str(film_id),headers=util.headers,params={})
@@ -99,6 +100,10 @@ class film:
         sf=soup.find('strong',attrs={'property':'v:average'})
         if sf:
             self.score=sf.get_text()
+
+        sf=soup.find('span',attrs={'property':'v:summary'})
+        if sf:
+            self.film_summary=sf.get_text().strip()
 
     def get_actor_info(self,act):
         r=proxy.gethtml(url='https://movie.douban.com/celebrity/'+str(act.actor_id),headers=util.headers,params={})
@@ -199,25 +204,29 @@ class film:
 
 
             dbacts=sql.get_actor_byid(act.actor_id)
-            if len(dbacts)==0:
-                self.get_actor_info(act)
-                sql.save_actor(act)
-            dbactfs=sql.get_actor_film_byid(act.actor_id,film_id)
-            if len(dbactfs)==0:
-                sql.save_actor_film(act.actor_id,film_id,act.actor_role)
-            
+            try:
+                if len(dbacts)==0:
+                    self.get_actor_info(act)
+                    sql.save_actor(act)
+                dbactfs=sql.get_actor_film_byid(act.actor_id,film_id)
+                if len(dbactfs)==0:
+                    sql.save_actor_film(act.actor_id,film_id,act.actor_role)
+            except Exception as e:
+                log.logger.info(str(e))
             print(act)
                       
 
     def save(self):
-        flms=sql.get_film_byid(self.film_id)
-        if len(flms)==0:
-            sql.insert_film(self)
-        else:
-            sql.update_film_byid(self)
-
-
+        try:
+            flms=sql.get_film_byid(self.film_id)
+            if len(flms)==0:
+                sql.insert_film(self)
+            else:
+                sql.update_film_byid(self)
+        except Exception as e:
+            log.logger.info(str(e))
 '''
 f=film()
-f.get_actors(25907124)
+f.get_film(25907124)
+f.save()
 '''

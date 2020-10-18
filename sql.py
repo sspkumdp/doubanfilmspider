@@ -11,10 +11,10 @@ connection = pymysql.connect(host='localhost',
 #插入电影
 def insert_film(film):
     with connection.cursor() as cursor:
-        sql = "INSERT INTO `film` (`film_id`,`film_name`,`director`,`screenwriter`,`mainactors`,`film_type`,`area`,`lang`,`film_date`,`film_time`,`film_alias`,`imdb`,`score`,`spider`) VALUES (%s, %s, %s, %s,%s, %s, %s, %s,%s, %s, %s, %s,%s, '0')"
+        sql = "INSERT INTO `film` (`film_id`,`film_name`,`director`,`screenwriter`,`mainactors`,`film_type`,`area`,`lang`,`film_date`,`film_time`,`film_alias`,`imdb`,`score`,`film_summary`,`spider`) VALUES (%s, %s, %s, %s,%s, %s, %s, %s,%s, %s, %s, %s,%s,%s, '0')"
         cursor.execute(sql, (film.film_id,film.film_name,film.director,film.screenwriter
             ,film.mainactors,film.film_type,film.area,film.lang,film.film_date,film.film_time
-            ,film.film_alias,film.imdb,film.score))
+            ,film.film_alias,film.imdb,film.score,film.film_summary))
     connection.commit()
 
 def get_film_byid(film_id):
@@ -37,10 +37,10 @@ def update_film_spider(film_id):
 
 def update_film_byid(film):
     with connection.cursor() as cursor:
-        sql = "update `film` set `film_id`=%s,`film_name`=%s,`director`=%s,`screenwriter`=%s,`mainactors`=%s,`film_type`=%s,`area`=%s,`lang`=%s,`film_date`=%s,`film_time`=%s,`film_alias`=%s,`imdb`=%s,`score`=%s where film_id=%s"
+        sql = "update `film` set `film_id`=%s,`film_name`=%s,`director`=%s,`screenwriter`=%s,`mainactors`=%s,`film_type`=%s,`area`=%s,`lang`=%s,`film_date`=%s,`film_time`=%s,`film_alias`=%s,`imdb`=%s,`score`=%s, film_summary=%s where film_id=%s"
         cursor.execute(sql, (film.film_id,film.film_name,film.director,film.screenwriter
             ,film.mainactors,film.film_type,film.area,film.lang,film.film_date,film.film_time
-            ,film.film_alias,film.imdb,film.score,film.film_id))
+            ,film.film_alias,film.imdb,film.score,film.film_summary,film.film_id))
     connection.commit()
 
 
