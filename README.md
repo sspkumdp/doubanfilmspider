@@ -3,6 +3,7 @@
 一个豆瓣电影的爬虫    
 
 requests+beautifulsoup   
+构建数据库，之后运行python pipeline.py即可
 
 流程：   
 1） 从高分电影top200爬取200个电影数据。
